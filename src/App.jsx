@@ -1,4 +1,5 @@
-import { motion, useScroll, useTransform } from "framer-motion";
+import { useEffect, useState } from "react";
+import { AnimatePresence, motion, useScroll, useTransform } from "framer-motion";
 import {
   ArrowRight,
   CakeSlice,
@@ -14,6 +15,7 @@ import {
   Sparkles,
   Star,
   Utensils,
+  X,
 } from "lucide-react";
 
 const phone = "6306681171";
@@ -141,7 +143,7 @@ function PrimaryButton({ href, children, icon: Icon = ArrowRight, dark = false }
       whileHover={{ y: -2, scale: 1.02 }}
       whileTap={{ scale: 0.98 }}
       href={href}
-      className={`group inline-flex min-h-12 items-center justify-center gap-2 rounded-full px-6 py-3 text-sm font-bold shadow-glow transition ${
+      className={`group inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-full px-6 py-3 text-sm font-bold shadow-glow transition sm:w-auto ${
         dark
           ? "bg-chocolate text-cream hover:bg-cocoa"
           : "bg-caramel text-chocolate hover:bg-[#e2b685]"
@@ -159,7 +161,7 @@ function SecondaryButton({ href, children, icon: Icon = ArrowRight }) {
       whileHover={{ y: -2 }}
       whileTap={{ scale: 0.98 }}
       href={href}
-      className="inline-flex min-h-12 items-center justify-center gap-2 rounded-full border border-chocolate/15 bg-white/70 px-6 py-3 text-sm font-bold text-chocolate shadow-soft backdrop-blur transition hover:border-caramel hover:bg-white"
+      className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-full border border-chocolate/15 bg-white/70 px-6 py-3 text-sm font-bold text-chocolate shadow-soft backdrop-blur transition hover:border-caramel hover:bg-white sm:w-auto"
     >
       {children}
       <Icon size={18} />
@@ -192,18 +194,70 @@ function FloatingTreats() {
 }
 
 function Navbar() {
+  const [isOpen, setIsOpen] = useState(false);
+  const [isDarkSection, setIsDarkSection] = useState(false);
+  const closeMenu = () => setIsOpen(false);
+
+  useEffect(() => {
+    const darkSections = Array.from(document.querySelectorAll("[data-nav-theme='dark']"));
+    if (!darkSections.length) return undefined;
+
+    const updateTheme = () => {
+      const probeY = 118;
+      setIsDarkSection(
+        darkSections.some((section) => {
+          const rect = section.getBoundingClientRect();
+          return rect.top <= probeY && rect.bottom >= probeY;
+        })
+      );
+    };
+
+    updateTheme();
+    window.addEventListener("scroll", updateTheme, { passive: true });
+    window.addEventListener("resize", updateTheme);
+
+    return () => {
+      window.removeEventListener("scroll", updateTheme);
+      window.removeEventListener("resize", updateTheme);
+    };
+  }, []);
+
+  const navTone = isDarkSection
+    ? {
+        shell: "border-cream/25 bg-chocolate/86 text-cream shadow-[0_18px_60px_rgba(0,0,0,0.28)]",
+        logo: "bg-cream text-chocolate",
+        brand: "text-cream",
+        sub: "text-caramel",
+        link: "font-bold text-white [text-shadow:0_1px_10px_rgba(0,0,0,0.38)] hover:text-cream",
+        zomato: "border-cream/20 bg-cream/90 text-chocolate hover:bg-white",
+        order: "bg-cream text-chocolate hover:bg-white",
+        menuButton: "border-cream/20 bg-cream/12 text-cream hover:bg-cream/18",
+      }
+    : {
+        shell: "border-white/55 bg-cream/78 text-chocolate shadow-soft",
+        logo: "bg-chocolate text-cream",
+        brand: "text-chocolate",
+        sub: "text-cocoa/75",
+        link: "font-semibold text-chocolate/72 hover:text-chocolate",
+        zomato: "border-caramel/40 bg-white/65 text-chocolate hover:bg-white",
+        order: "bg-chocolate text-cream hover:bg-cocoa",
+        menuButton: "border-chocolate/10 bg-white/70 text-chocolate hover:bg-white",
+      };
+
   return (
-    <header className="fixed inset-x-0 top-0 z-50 px-4 py-3 sm:px-6">
-      <nav className="mx-auto flex max-w-7xl items-center justify-between rounded-full border border-white/55 bg-cream/78 px-4 py-3 shadow-soft backdrop-blur-xl">
-        <a href="#home" className="flex items-center gap-3">
-          <span className="grid size-10 place-items-center rounded-full bg-chocolate text-cream shadow-glow">
+    <header className="fixed inset-x-0 top-0 z-50 px-3 py-3 sm:px-6">
+      <nav
+        className={`mx-auto flex max-w-7xl items-center justify-between rounded-full border px-4 py-3 backdrop-blur-xl transition-colors duration-300 ${navTone.shell}`}
+      >
+        <a href="#home" onClick={closeMenu} className="flex items-center gap-3">
+          <span className={`grid size-10 place-items-center rounded-full shadow-glow transition-colors duration-300 ${navTone.logo}`}>
             <CakeSlice size={19} />
           </span>
           <span>
-            <span className="block font-serif text-lg font-bold leading-none text-chocolate">
+            <span className={`block font-serif text-lg font-bold leading-none transition-colors duration-300 ${navTone.brand}`}>
               Bake & Take
             </span>
-            <span className="hidden text-[11px] font-semibold uppercase tracking-[0.2em] text-cocoa/75 sm:block">
+            <span className={`hidden text-[11px] font-semibold uppercase tracking-[0.2em] transition-colors duration-300 sm:block ${navTone.sub}`}>
               Jaunpur
             </span>
           </span>
@@ -214,7 +268,7 @@ function Navbar() {
             <a
               key={label}
               href={href}
-              className="text-sm font-semibold text-chocolate/72 transition hover:text-chocolate"
+              className={`text-sm transition-colors duration-300 ${navTone.link}`}
             >
               {label}
             </a>
@@ -226,7 +280,7 @@ function Navbar() {
             href={zomato}
             target="_blank"
             rel="noreferrer"
-            className="hidden rounded-full border border-caramel/40 bg-white/65 px-4 py-2 text-sm font-bold text-chocolate transition hover:bg-white sm:inline-flex"
+            className={`hidden rounded-full border px-4 py-2 text-sm font-bold transition-colors duration-300 lg:inline-flex ${navTone.zomato}`}
           >
             Zomato
           </a>
@@ -234,19 +288,73 @@ function Navbar() {
             href={whatsapp}
             target="_blank"
             rel="noreferrer"
-            className="inline-flex items-center gap-2 rounded-full bg-chocolate px-4 py-2 text-sm font-bold text-cream shadow-glow transition hover:bg-cocoa"
+            className={`hidden items-center gap-2 rounded-full px-4 py-2 text-sm font-bold shadow-glow transition-colors duration-300 lg:inline-flex ${navTone.order}`}
           >
             <MessageCircle size={16} />
-            <span className="hidden sm:inline">Order Now</span>
+            <span>Order Now</span>
           </a>
           <button
-            className="grid size-10 place-items-center rounded-full border border-chocolate/10 bg-white/60 text-chocolate lg:hidden"
-            aria-label="Open menu"
+            className={`grid size-10 place-items-center rounded-full border transition-colors duration-300 lg:hidden ${navTone.menuButton}`}
+            aria-expanded={isOpen}
+            aria-label={isOpen ? "Close menu" : "Open menu"}
+            onClick={() => setIsOpen((current) => !current)}
           >
-            <Menu size={18} />
+            {isOpen ? <X size={18} /> : <Menu size={18} />}
           </button>
         </div>
       </nav>
+
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            initial={{ opacity: 0, y: -10, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -8, scale: 0.98 }}
+            transition={{ duration: 0.22, ease: "easeOut" }}
+            className="mx-auto mt-3 max-w-7xl overflow-hidden rounded-[1.65rem] border border-white/75 bg-rosecream p-3 shadow-glow lg:hidden"
+          >
+            <div className="grid gap-2">
+              {navItems.map(([label, href]) => (
+                <a
+                  key={label}
+                  href={href}
+                  onClick={closeMenu}
+                  className="flex min-h-12 items-center justify-between rounded-2xl bg-white px-4 text-sm font-bold text-chocolate shadow-[0_10px_26px_rgba(62,39,35,0.06)] transition hover:bg-cream"
+                >
+                  {label}
+                  <ArrowRight size={16} />
+                </a>
+              ))}
+            </div>
+
+            <div className="mt-3 grid grid-cols-2 gap-2">
+              <a
+                href={whatsapp}
+                target="_blank"
+                rel="noreferrer"
+                className="flex min-h-14 items-center justify-center gap-2 rounded-2xl bg-chocolate px-3 text-sm font-bold text-cream shadow-soft"
+              >
+                <MessageCircle size={17} />
+                WhatsApp
+              </a>
+              <a
+                href={zomato}
+                target="_blank"
+                rel="noreferrer"
+                className="flex min-h-14 items-center justify-center gap-2 rounded-2xl bg-caramel px-3 text-sm font-bold text-chocolate shadow-soft"
+              >
+                <Utensils size={17} />
+                Zomato
+              </a>
+            </div>
+
+            <div className="mt-3 flex items-center justify-between rounded-2xl bg-white px-4 py-3 text-xs font-semibold text-cocoa/78">
+              <span>TD College Road</span>
+              <span>10 AM onwards</span>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </header>
   );
 }
@@ -256,28 +364,28 @@ function Hero() {
   const imageY = useTransform(scrollY, [0, 650], [0, 90]);
 
   return (
-    <section id="home" className="relative min-h-screen overflow-hidden bg-cream-radial px-4 pt-28 sm:px-6 lg:pt-32">
+    <section id="home" className="relative min-h-[92vh] overflow-hidden bg-cream-radial px-4 pt-28 sm:px-6 lg:min-h-screen lg:pt-32">
       <FloatingTreats />
       <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-rosecream to-transparent" />
 
-      <div className="relative z-10 mx-auto grid min-h-[calc(100vh-8rem)] max-w-7xl items-center gap-12 pb-20 lg:grid-cols-[1.02fr_0.98fr]">
+      <div className="relative z-10 mx-auto grid max-w-7xl items-center gap-10 pb-16 lg:min-h-[calc(100vh-8rem)] lg:grid-cols-[1.02fr_0.98fr] lg:gap-12 lg:pb-20">
         <motion.div initial="hidden" animate="show" variants={fadeUp}>
-          <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-white/70 bg-white/55 px-4 py-2 text-sm font-bold text-chocolate shadow-soft backdrop-blur">
+          <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-white/70 bg-white/55 px-4 py-2 text-xs font-bold text-chocolate shadow-soft backdrop-blur sm:mb-6 sm:text-sm">
             <Star size={16} className="fill-caramel text-caramel" />
             4.5 Rating | 140+ Google Reviews
           </div>
-          <h1 className="max-w-4xl break-words font-serif text-[3.25rem] font-extrabold leading-[0.95] text-chocolate sm:text-6xl lg:text-7xl">
+          <h1 className="max-w-4xl break-words font-serif text-[2.95rem] font-extrabold leading-[0.96] text-chocolate sm:text-6xl lg:text-7xl">
             Freshly Baked Happiness,{" "}
             <span className="block lg:inline">
               <span className="soft-underline">Served Daily</span> 🍰
             </span>
           </h1>
-          <p className="mt-6 max-w-2xl text-lg leading-8 text-cocoa/88 sm:text-xl">
+          <p className="mt-5 max-w-2xl text-base leading-7 text-cocoa/88 sm:mt-6 sm:text-xl sm:leading-8">
             Handcrafted cakes, pastries, and treats made with love on TD College Road.
             A cozy dessert stop for birthdays, dates, family evenings, and after-college cravings.
           </p>
 
-          <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+          <div className="mt-7 flex flex-col gap-3 sm:mt-8 sm:flex-row">
             <PrimaryButton href={whatsapp} icon={MessageCircle} dark>
               Order on WhatsApp
             </PrimaryButton>
@@ -289,7 +397,7 @@ function Hero() {
             </SecondaryButton>
           </div>
 
-          <div className="mt-10 grid max-w-xl grid-cols-3 gap-2 sm:gap-3">
+          <div className="mt-8 grid max-w-xl grid-cols-3 gap-2 sm:mt-10 sm:gap-3">
             {[
               ["10 AM", "Opening"],
               ["₹300", "For two"],
@@ -346,32 +454,32 @@ function About() {
       initial="hidden"
       whileInView="show"
       viewport={{ once: true, margin: "-120px" }}
-      className="bg-rosecream px-4 py-20 sm:px-6 lg:py-28"
+      className="bg-rosecream px-4 py-16 sm:px-6 sm:py-20 lg:py-28"
     >
       <div className="mx-auto grid max-w-7xl items-center gap-12 lg:grid-cols-[0.88fr_1.12fr]">
-        <motion.div variants={fadeUp} className="grid grid-cols-2 gap-4">
+        <motion.div variants={fadeUp} className="grid grid-cols-2 gap-3 sm:gap-4">
           <img
             src={photos.cake}
             alt="Red velvet cake at Bake & Take"
-            className="h-72 w-full rounded-[1.75rem] object-cover shadow-soft"
+            className="h-52 w-full rounded-[1.35rem] object-cover shadow-soft sm:h-72 sm:rounded-[1.75rem]"
           />
           <img
             src={photos.ambience}
             alt="Bake & Take interior"
-            className="mt-10 h-72 w-full rounded-[1.75rem] object-cover shadow-soft"
+            className="mt-8 h-52 w-full rounded-[1.35rem] object-cover shadow-soft sm:mt-10 sm:h-72 sm:rounded-[1.75rem]"
           />
         </motion.div>
         <motion.div variants={fadeUp}>
           <SectionLabel>Our Story</SectionLabel>
-          <h2 className="font-serif text-4xl font-bold leading-tight text-chocolate sm:text-5xl">
+          <h2 className="font-serif text-3xl font-bold leading-tight text-chocolate sm:text-5xl">
             A softer, sweeter corner of Jaunpur.
           </h2>
-          <p className="mt-6 text-lg leading-8 text-cocoa/86">
+          <p className="mt-5 text-base leading-7 text-cocoa/86 sm:mt-6 sm:text-lg sm:leading-8">
             Bake & Take is built around the little rituals that make a day feel special:
             choosing a birthday cake, sharing a pastry after class, getting coffee with someone
             you like, or finding a peaceful table when the city feels busy.
           </p>
-          <p className="mt-4 text-lg leading-8 text-cocoa/86">
+          <p className="mt-4 text-base leading-7 text-cocoa/86 sm:text-lg sm:leading-8">
             The feeling is warm, handcrafted, and quietly premium. Fresh bakery shelves,
             friendly staff, cozy lights, and treats that look good enough for your camera
             before they disappear from the plate.
@@ -397,17 +505,17 @@ function SignatureProducts() {
       initial="hidden"
       whileInView="show"
       viewport={{ once: true, margin: "-120px" }}
-      className="bg-cream-radial px-4 py-20 sm:px-6 lg:py-28"
+      className="bg-cream-radial px-4 py-16 sm:px-6 sm:py-20 lg:py-28"
     >
       <div className="mx-auto max-w-7xl">
         <div className="max-w-3xl">
           <SectionLabel>Signature Products</SectionLabel>
-          <motion.h2 variants={fadeUp} className="font-serif text-4xl font-bold text-chocolate sm:text-5xl">
+          <motion.h2 variants={fadeUp} className="font-serif text-3xl font-bold leading-tight text-chocolate sm:text-5xl">
             Sweet classics, comfort snacks, and celebration-ready cakes.
           </motion.h2>
         </div>
 
-        <div className="mt-12 grid gap-6 md:grid-cols-2 xl:grid-cols-4">
+        <div className="mt-9 grid gap-5 sm:mt-12 md:grid-cols-2 xl:grid-cols-4">
           {products.map((product, index) => {
             const Icon = product.icon;
 
@@ -417,9 +525,9 @@ function SignatureProducts() {
                 variants={fadeUp}
                 transition={{ delay: index * 0.08 }}
                 whileHover={{ y: -10, scale: 1.015 }}
-                className="group overflow-hidden rounded-[1.75rem] bg-white shadow-soft"
+                className="group overflow-hidden rounded-[1.35rem] bg-white shadow-soft sm:rounded-[1.75rem]"
               >
-                <div className="relative h-56 overflow-hidden">
+                <div className="relative h-44 overflow-hidden sm:h-56">
                   <img
                     src={product.image}
                     alt={product.name}
@@ -430,12 +538,14 @@ function SignatureProducts() {
                     {product.badge}
                   </span>
                 </div>
-                <div className="p-6">
-                  <div className="mb-4 grid size-12 place-items-center rounded-2xl bg-pink/35 text-chocolate">
+                <div className="p-5 sm:p-6">
+                  <div className="mb-4 grid size-11 place-items-center rounded-2xl bg-pink/35 text-chocolate sm:size-12">
                     <Icon size={22} />
                   </div>
-                  <h3 className="font-serif text-2xl font-bold text-chocolate">{product.name}</h3>
-                  <p className="mt-3 min-h-24 text-sm leading-6 text-cocoa/78">{product.note}</p>
+                  <h3 className="font-serif text-[1.65rem] font-bold leading-tight text-chocolate sm:text-2xl">
+                    {product.name}
+                  </h3>
+                  <p className="mt-3 text-sm leading-6 text-cocoa/78 sm:min-h-24">{product.note}</p>
                   <a
                     href={whatsapp}
                     target="_blank"
@@ -458,6 +568,7 @@ function Ambience() {
   return (
     <motion.section
       id="ambience"
+      data-nav-theme="dark"
       initial="hidden"
       whileInView="show"
       viewport={{ once: true, margin: "-120px" }}
@@ -699,7 +810,7 @@ function Contact() {
 
 function FinalCta() {
   return (
-    <section className="relative overflow-hidden bg-chocolate px-4 py-20 text-center text-cream sm:px-6 lg:py-28">
+    <section data-nav-theme="dark" className="relative overflow-hidden bg-chocolate px-4 py-20 text-center text-cream sm:px-6 lg:py-28">
       <FloatingTreats />
       <div className="relative z-10 mx-auto max-w-4xl">
         <p className="mb-5 text-sm font-bold uppercase tracking-[0.24em] text-caramel">
